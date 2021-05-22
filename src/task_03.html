@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+Задание 3
+1. Реализовать чат на основе эхо-сервера wss://echo.websocket.org/
+Интерфейс состоит из input, куда вводится текст сообщения, и кнопки «Отправить».
+
+При клике на кнопку «Отправить» сообщение должно появляться в окне переписки.
+
+Эхо-сервер будет отвечать вам тем же сообщением, его также необходимо выводить в чат:
+2. Добавить в чат механизм отправки гео-локации:
+При клике на кнопку «Гео-локация» необходимо отправить данные серверу и в чат вывести ссылку на https://www.openstreetmap.org/ с вашей гео-локацией. Сообщение, которое отправит обратно эхо-сервер, не выводить.
+-->
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Модуль 10. Задание 3</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Модуль 10. Задание 3</h1>
+
+    <div class="row">
+      <div class="col-6">
+        <input id="inpMsg" type="text" class="form-control" placeholder="Введите текст сообщения" />
+      </div>
+      <div class="col-3">
+        <button id="btnSend" type="button" class="btn btn-primary">Отправить</button>
+      </div>
+      <div class="col-3">
+        <button id="btnGeo" type="button" class="btn btn-info">Гео-локация</button>
+      </div>
+    </div>
+
+    <div class="mt-4" id="output"></div>
+
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+    crossorigin="anonymous"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const echoUrl = "wss://echo.websocket.org/"
+      const geoUrl = "https://www.openstreetmap.org/"
+
+      const inpMsg = document.getElementById("inpMsg")
+      const btnSend = document.getElementById("btnSend")
+      const btnGeo = document.getElementById("btnGeo")
+      const output = document.getElementById("output")
+
+      let echo, connected = false
+
+      echo = new WebSocket(echoUrl)
+
+      echo.onopen = evt => {
+        connected = true
+      }
+
+      echo.onmessage = evt => {
+        writeToScreen(`<span style="color: blue;">RESPONSE: ${evt.data}</span>`)
+      }
+
+      echo.onerror = evt => {
+        writeToScreen(`<span style="color: red;">RESPONSE: ${evt.data}</span>`)
+      }
+
+      const writeToScreen = msg => {
+        const p = document.createElement("p")
+        p.style.wordWrap = "break-word"
+        p.innerHTML = msg
+        output.appendChild(p)
+      }
+
+      btnSend.addEventListener("click", e => {
+        const m = inpMsg.value
+        if (m.length > 0 && connected) {
+          writeToScreen(`<span style="color: green;">SENT: ${m}</span>`)
+          echo.send(m)
+        }
+        inpMsg.value = ""
+      })
+
+      const geoError = () => {
+        writeToScreen(`<span style="color: red;">GEO: Невозможно получить ваше местоположение</span>`)
+      }
+
+      const geoSuccess = ({ coords: { latitude, longitude } }) => {
+        //const { latitude, longitude } = coords
+
+        writeToScreen(`<span style="color: brown;">GEO: Широта: ${latitude}, долгота: ${longitude}</span>`)
+        writeToScreen(`<a href="${geoUrl}/#map=14/${latitude}/${longitude} target="_blank"">Посмотреть на карте</a>`)
+      }
+
+      btnGeo.addEventListener("click", e => {
+        if (!navigator.geolocation)
+          writeToScreen(`<span style="color: red;">GEO: Геолокация не поддерживается вашим браузером</span>`)
+        else
+          navigator.geolocation.getCurrentPosition(geoSuccess, geoError)
+      })
+    })
+  </script>
+</body>
+
+</html>
